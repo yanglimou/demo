@@ -6,82 +6,127 @@
     <title>Document</title>
     <script src="https://cdn.bootcdn.net/ajax/libs/vue/2.6.11/vue.min.js"></script>
     <script src="https://cdn.bootcdn.net/ajax/libs/axios/0.19.2/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/v-charts/lib/index.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/v-charts/lib/style.min.css"
+    />
     <style>
-      table.data {
+      html,
+      body {
+        margin: 0px;
+        padding: 0px;
+        height: 100%;
+      }
+      #app {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+      .top {
+        flex: 1 0 0;
+        height: 0;
+
+        display: flex;
+        flex-direction: row;
+      }
+      .form {
+      }
+      .data {
+        flex: 1 0 0;
+        width: 0;
+        margin-left: 2rem;
+      }
+      .data table {
         width: 100%;
+      }
+      .bottom {
+        flex: 1 0 0;
+        height: 0;
+        overflow: auto;
       }
     </style>
   </head>
   <body>
-    <div id="id">
-      <form action="">
-        <table>
-          <tr>
-            <td>id</td>
-            <td>{{bill.id}}</td>
-          </tr>
-          <tr>
-            <td>时间</td>
-            <td><input type="date" v-model="bill.date" /></td>
-          </tr>
-          <tr>
-            <td>事项</td>
-            <td>
-              <input type="text" v-model="bill.name" />
-            </td>
-          </tr>
-          <tr>
-            <td>花费</td>
-            <td>
-              <input type="number" v-model.number="bill.cost" />
-            </td>
-          </tr>
-          <tr>
-            <td>备注</td>
-            <td>
-              <textarea v-model="bill.mark" cols="30" rows="10"></textarea>
-            </td>
-          </tr>
-          <tr>
-            <td rowspan="2">
-              <button type="button" @click="addBill">新增</button>
-              <button type="button" @click="updateBill">修改</button>
-              <button type="button" @click="clear">清空</button>
-            </td>
-          </tr>
-        </table>
-      </form>
-      <table class="data">
-        <tr>
-          <td>编号</td>
-          <td>时间</td>
-          <td>事项</td>
-          <td>花费</td>
-          <td>备注</td>
-          <td>操作</td>
-        </tr>
-        <tr v-for="bill in bills">
-          <td>{{bill.id}}</td>
-          <td>{{bill.date}}</td>
-          <td>{{bill.name}}</td>
-          <td>{{bill.cost}}</td>
-          <td>{{bill.mark}}</td>
-          <td>
-            <button @click="toUpdate(bill)">修改</button>
-            <button @click="removeBill(bill)">删除</button>
-          </td>
-        </tr>
-      </table>
+    <div id="app">
+      <div class="top">
+        <div class="form">
+          <form action="">
+            <table>
+              <tr>
+                <td>id</td>
+                <td>{{bill.id}}</td>
+              </tr>
+              <tr>
+                <td>时间</td>
+                <td><input type="date" v-model="bill.date" /></td>
+              </tr>
+              <tr>
+                <td>事项</td>
+                <td>
+                  <input type="text" v-model="bill.name" />
+                </td>
+              </tr>
+              <tr>
+                <td>花费</td>
+                <td>
+                  <input type="number" v-model.number="bill.cost" />
+                </td>
+              </tr>
+              <tr>
+                <td>备注</td>
+                <td>
+                  <textarea v-model="bill.mark" cols="30" rows="10"></textarea>
+                </td>
+              </tr>
+              <tr>
+                <td rowspan="2">
+                  <button type="button" @click="addBill">新增</button>
+                  <button type="button" @click="updateBill">修改</button>
+                  <button type="button" @click="clear">清空</button>
+                </td>
+              </tr>
+            </table>
+          </form>
+        </div>
+        <div class="data">
+          <table>
+            <tr>
+              <td>编号</td>
+              <td>时间</td>
+              <td>事项</td>
+              <td>花费</td>
+              <td>备注</td>
+              <td>操作</td>
+            </tr>
+            <tr v-for="bill in bills">
+              <td>{{bill.id}}</td>
+              <td>{{bill.date}}</td>
+              <td>{{bill.name}}</td>
+              <td>{{bill.cost}}</td>
+              <td>{{bill.mark}}</td>
+              <td>
+                <button @click="toUpdate(bill)">修改</button>
+                <button @click="removeBill(bill)">删除</button>
+              </td>
+            </tr>
+          </table>
+        </div>
+      </div>
+      <div class="bottom">
+        <ve-line :data="chartData" height="98%" width="98%"></ve-line>
+      </div>
     </div>
   </body>
 </html>
 <script>
   const instance = axios.create({
-    baseURL: "http://www.yanglimou.com/bill-rest-app",
+    baseURL: "http://localhost/bill-rest-app",
   });
   Vue.prototype.$http = instance;
   new Vue({
-    el: "#id",
+    el: "#app",
     data: {
       bill: {
         id: "",
@@ -89,6 +134,17 @@
         mark: "",
         name: "",
         cost: 0,
+      },
+      chartData: {
+        columns: ["日期", "账单"],
+        rows: [
+          { 日期: "1月1日", 账单: 123 },
+          { 日期: "1月2日", 账单: 1223 },
+          { 日期: "1月3日", 账单: 2123 },
+          { 日期: "1月4日", 账单: 4123 },
+          { 日期: "1月5日", 账单: 3123 },
+          { 日期: "1月6日", 账单: 7123 },
+        ],
       },
       bills: [],
     },
@@ -107,10 +163,23 @@
       },
       async search() {
         let response = await this.$http.get(
-          "/bills?_sort=date,id&_order=desc,desc"
+          "/bills?_sort=date,id&_order=asc,asc"
         );
         console.log(response);
         this.bills = response.data;
+        let result = {};
+        this.bills.forEach((bill) => {
+          result[bill.date] = (result[bill.date] || 0) + bill.cost;
+        });
+
+        this.chartData = {
+          columns: ["日期", "账单"],
+          rows: Object.keys(result)
+            .sort()
+            .map((x) => {
+              return { 日期: x, 账单: result[x] };
+            }),
+        };
       },
       async addBill() {
         console.log(this.bill);
