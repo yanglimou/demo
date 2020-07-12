@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script src="https://cdn.bootcdn.net/ajax/libs/vue/2.6.11/vue.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/axios/0.19.2/axios.min.js"></script>
+    <style>
+      table.data {
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="id">
+      <form action="">
+        <table>
+          <tr>
+            <td>id</td>
+            <td>{{bill.id}}</td>
+          </tr>
+          <tr>
+            <td>时间</td>
+            <td><input type="date" v-model="bill.date" /></td>
+          </tr>
+          <tr>
+            <td>事项</td>
+            <td>
+              <input type="text" v-model="bill.name" />
+            </td>
+          </tr>
+          <tr>
+            <td>花费</td>
+            <td>
+              <input type="number" v-model.number="bill.cost" />
+            </td>
+          </tr>
+          <tr>
+            <td>备注</td>
+            <td>
+              <textarea v-model="bill.mark" cols="30" rows="10"></textarea>
+            </td>
+          </tr>
+          <tr>
+            <td rowspan="2">
+              <button type="button" @click="addBill">新增</button>
+              <button type="button" @click="updateBill">修改</button>
+              <button type="button" @click="clear">清空</button>
+            </td>
+          </tr>
+        </table>
+      </form>
+      <table class="data">
+        <tr>
+          <td>编号</td>
+          <td>时间</td>
+          <td>事项</td>
+          <td>花费</td>
+          <td>备注</td>
+          <td>操作</td>
+        </tr>
+        <tr v-for="bill in bills">
+          <td>{{bill.id}}</td>
+          <td>{{bill.date}}</td>
+          <td>{{bill.name}}</td>
+          <td>{{bill.cost}}</td>
+          <td>{{bill.mark}}</td>
+          <td>
+            <button @click="toUpdate(bill)">修改</button>
+            <button @click="removeBill(bill)">删除</button>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+<script>
+  Vue.prototype.$http = axios;
+  new Vue({
+    el: "#id",
+    data: {
+      bill: {
+        id: "",
+        date: "",
+        mark: "",
+        name: "",
+        cost: 0,
+      },
+      bills: [],
+    },
+    created() {
+      this.search();
+    },
+    methods: {
+      clear() {
+        this.bill = {
+          id: "",
+          date: "",
+          mark: "",
+          name: "",
+          cost: 0,
+        };
+      },
+      async search() {
+        let response = await this.$http.get(
+          "http://localhost:3000/bills?_sort=date,id&_order=desc,desc"
+        );
+        console.log(response);
+        this.bills = response.data;
+      },
+      async addBill() {
+        console.log(this.bill);
+        const { name, cost, date } = this.bill;
+        if (!date) {
+          alert("日期不能为空");
+          throw "日期不能为空";
+        }
+        if (!name) {
+          alert("事项不能为空");
+          throw "事项不能为空";
+        }
+        if (!cost) {
+          alert("花费不能为空");
+          throw "花费不能为空";
+        }
+        await this.$http.post("http://localhost:3000/bills", this.bill);
+        alert("新增成功");
+        this.clear();
+        await this.search();
+      },
+      toUpdate(bill) {
+        this.bill = { ...bill };
+      },
+      async updateBill() {
+        console.log(this.bill);
+        const { id, name, cost, date } = this.bill;
+        if (!id) {
+          alert("id不能为空");
+          throw "id不能为空";
+        }
+        if (!date) {
+          alert("日期不能为空");
+          throw "日期不能为空";
+        }
+        if (!name) {
+          alert("事项不能为空");
+          throw "事项不能为空";
+        }
+        if (!cost) {
+          alert("花费不能为空");
+          throw "花费不能为空";
+        }
+        await this.$http.put(`http://localhost:3000/bills/${id}`, this.bill);
+        alert("修改成功");
+        this.clear();
+        await this.search();
+      },
+      async removeBill(bill) {
+        if (confirm(`确认删除${bill.date}${bill.name}的花费吗？`)) {
+          await this.$http.delete(`http://localhost:3000/bills/${bill.id}`);
+          alert("删除成功");
+          await this.search();
+        }
+      },
+    },
+  });
+</script>
