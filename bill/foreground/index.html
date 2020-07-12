@@ -76,7 +76,10 @@
   </body>
 </html>
 <script>
-  Vue.prototype.$http = axios;
+  const instance = axios.create({
+    baseURL: "http://www.yanglimou.com/bill-rest-app",
+  });
+  Vue.prototype.$http = instance;
   new Vue({
     el: "#id",
     data: {
@@ -104,7 +107,7 @@
       },
       async search() {
         let response = await this.$http.get(
-          "http://localhost:3000/bills?_sort=date,id&_order=desc,desc"
+          "/bills?_sort=date,id&_order=desc,desc"
         );
         console.log(response);
         this.bills = response.data;
@@ -124,7 +127,7 @@
           alert("花费不能为空");
           throw "花费不能为空";
         }
-        await this.$http.post("http://localhost:3000/bills", this.bill);
+        await this.$http.post("/bills", this.bill);
         alert("新增成功");
         this.clear();
         await this.search();
@@ -151,14 +154,14 @@
           alert("花费不能为空");
           throw "花费不能为空";
         }
-        await this.$http.put(`http://localhost:3000/bills/${id}`, this.bill);
+        await this.$http.put(`/bills/${id}`, this.bill);
         alert("修改成功");
         this.clear();
         await this.search();
       },
       async removeBill(bill) {
         if (confirm(`确认删除${bill.date}${bill.name}的花费吗？`)) {
-          await this.$http.delete(`http://localhost:3000/bills/${bill.id}`);
+          await this.$http.delete(`/bills/${bill.id}`);
           alert("删除成功");
           await this.search();
         }
