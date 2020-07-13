@@ -149,13 +149,17 @@
       bills: [],
     },
     created() {
+      this.clear();
       this.search();
     },
     methods: {
       clear() {
+        let lastDate = localStorage.getItem("lastDate");
+        console.log(lastDate);
+
         this.bill = {
           id: "",
-          date: "",
+          date: lastDate || this.dateFormat("YYYY-mm-dd", new Date()),
           mark: "",
           name: "",
           cost: 0,
@@ -198,6 +202,7 @@
         }
         await this.$http.post("/bills", this.bill);
         alert("新增成功");
+        localStorage.setItem("lastDate", date);
         this.clear();
         await this.search();
       },
@@ -234,6 +239,28 @@
           alert("删除成功");
           await this.search();
         }
+      },
+      dateFormat(fmt, date) {
+        let ret;
+        const opt = {
+          "Y+": date.getFullYear().toString(), // 年
+          "m+": (date.getMonth() + 1).toString(), // 月
+          "d+": date.getDate().toString(), // 日
+          "H+": date.getHours().toString(), // 时
+          "M+": date.getMinutes().toString(), // 分
+          "S+": date.getSeconds().toString(), // 秒
+          // 有其他格式化字符需求可以继续添加，必须转化成字符串
+        };
+        for (let k in opt) {
+          ret = new RegExp("(" + k + ")").exec(fmt);
+          if (ret) {
+            fmt = fmt.replace(
+              ret[1],
+              ret[1].length == 1 ? opt[k] : opt[k].padStart(ret[1].length, "0")
+            );
+          }
+        }
+        return fmt;
       },
     },
   });
