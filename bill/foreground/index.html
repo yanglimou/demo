@@ -37,9 +37,15 @@
         flex: 1 0 0;
         width: 0;
         margin-left: 2rem;
+        /* overflow: auto; */
+        display: flex;
+        flex-direction: column;
       }
-      .data table {
+      .data .table {
         width: 100%;
+        flex: 1 0 0;
+        height: 0;
+        overflow: auto;
       }
       .bottom {
         flex: 1 0 0;
@@ -91,27 +97,33 @@
           </form>
         </div>
         <div class="data">
-          <table>
-            <tr>
-              <td>编号</td>
-              <td>时间</td>
-              <td>事项</td>
-              <td>花费</td>
-              <td>备注</td>
-              <td>操作</td>
-            </tr>
-            <tr v-for="bill in bills">
-              <td>{{bill.id}}</td>
-              <td>{{bill.date}}</td>
-              <td>{{bill.name}}</td>
-              <td>{{bill.cost}}</td>
-              <td>{{bill.mark}}</td>
-              <td>
-                <button @click="toUpdate(bill)">修改</button>
-                <button @click="removeBill(bill)">删除</button>
-              </td>
-            </tr>
-          </table>
+          <div class="cmd">
+            <label for="checkAll">全部</label>
+            <input type="checkbox" v-model="checkAll" id="checkAll" />
+          </div>
+          <div class="table">
+            <table>
+              <tr>
+                <td width="60px">编号</td>
+                <td width="100px">时间</td>
+                <td width="100px">事项</td>
+                <td width="100px">花费</td>
+                <td width="200px">备注</td>
+                <td>操作</td>
+              </tr>
+              <tr v-for="(bill,index) in bills_new">
+                <td>{{index+1}}</td>
+                <td>{{bill.date}}</td>
+                <td>{{bill.name}}</td>
+                <td>{{bill.cost}}</td>
+                <td>{{bill.mark}}</td>
+                <td>
+                  <button @click="toUpdate(bill)">修改</button>
+                  <button @click="removeBill(bill)">删除</button>
+                </td>
+              </tr>
+            </table>
+          </div>
         </div>
       </div>
       <div class="bottom">
@@ -147,6 +159,15 @@
         ],
       },
       bills: [],
+      checkAll: false,
+    },
+    computed: {
+      bills_new() {
+        const today = this.getToday();
+        return this.checkAll
+          ? this.bills
+          : this.bills.filter((bill) => bill.date == today);
+      },
     },
     created() {
       this.clear();
@@ -159,7 +180,7 @@
 
         this.bill = {
           id: "",
-          date: lastDate || this.dateFormat("YYYY-mm-dd", new Date()),
+          date: lastDate || this.getToday(),
           mark: "",
           name: "",
           cost: 0,
@@ -167,7 +188,7 @@
       },
       async search() {
         let response = await this.$http.get(
-          "/bills?_sort=date,id&_order=asc,asc"
+          "/bills?_sort=date,id&_order=desc,asc"
         );
         console.log(response);
         this.bills = response.data;
@@ -239,6 +260,9 @@
           alert("删除成功");
           await this.search();
         }
+      },
+      getToday() {
+        return this.dateFormat("YYYY-mm-dd", new Date());
       },
       dateFormat(fmt, date) {
         let ret;
