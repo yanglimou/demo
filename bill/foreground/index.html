@@ -8,10 +8,17 @@
     <script src="https://cdn.bootcdn.net/ajax/libs/axios/0.19.2/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/v-charts/lib/index.min.js"></script>
+
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/v-charts/lib/style.min.css"
     />
+
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/element-ui/lib/theme-chalk/index.css"
+    />
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
     <style>
       html,
       body {
@@ -51,6 +58,18 @@
         flex: 1 0 0;
         height: 0;
         overflow: auto;
+        display: flex;
+        flex-direction: row;
+      }
+      .bottom > div:not(.slider) {
+        flex: 1 0 0;
+        width: 0;
+      }
+      .bottom > .slider {
+        width: 100px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
       }
     </style>
   </head>
@@ -71,7 +90,7 @@
               <tr>
                 <td>事项</td>
                 <td>
-                  <input type="text" v-model="bill.name" />
+                  <input type="text" ref="name" v-model="bill.name" />
                 </td>
               </tr>
               <tr>
@@ -127,7 +146,28 @@
         </div>
       </div>
       <div class="bottom">
-        <ve-line :data="chartData" height="98%" width="98%"></ve-line>
+        <div class="slider">
+          <el-slider
+            v-model="limitValue"
+            vertical
+            :min="0"
+            :max="3000"
+            height="200px"
+          >
+          </el-slider>
+        </div>
+        <div>
+          <ve-line
+            :data="lineData"
+            :extend="extend"
+            height="99%"
+            width="98%"
+          ></ve-line>
+        </div>
+
+        <div>
+          <ve-pie :data="pieData" height="99%" width="98%"></ve-pie>
+        </div>
       </div>
     </div>
   </body>
@@ -147,19 +187,20 @@
         name: "",
         cost: 0,
       },
-      chartData: {
-        columns: ["日期", "账单"],
-        rows: [
-          { 日期: "1月1日", 账单: 123 },
-          { 日期: "1月2日", 账单: 1223 },
-          { 日期: "1月3日", 账单: 2123 },
-          { 日期: "1月4日", 账单: 4123 },
-          { 日期: "1月5日", 账单: 3123 },
-          { 日期: "1月6日", 账单: 7123 },
-        ],
+      extend: {
+        series: {
+          label: {
+            normal: {
+              show: true,
+            },
+          },
+        },
       },
+      chartDataLine: {},
+      chartDataPie: {},
       bills: [],
       checkAll: false,
+      limitValue: 500,
     },
     computed: {
       bills_new() {
@@ -168,12 +209,52 @@
           ? this.bills
           : this.bills.filter((bill) => bill.date == today);
       },
+      lineData() {
+        let result = {};
+        this.bills
+          .filter((bill) => bill.cost <= this.limitValue)
+          .forEach((bill) => {
+            result[bill.date] = (result[bill.date] || 0) + bill.cost;
+          });
+
+        return {
+          columns: ["日期", "账单"],
+          rows: Object.keys(result)
+            .sort()
+            .map((x) => {
+              return { 日期: x, 账单: result[x] };
+            }),
+        };
+      },
+      pieData() {
+        let result = {};
+        this.bills
+          .filter((bill) => bill.cost <= this.limitValue)
+          .forEach((bill) => {
+            result[bill.name] = (result[bill.name] || 0) + bill.cost;
+          });
+
+        return {
+          columns: ["事项", "花费"],
+          rows: Object.keys(result)
+            .sort()
+            .map((x) => {
+              return { 事项: x, 花费: result[x] };
+            }),
+        };
+      },
     },
     created() {
       this.clear();
       this.search();
     },
+    mounted() {
+      this.focusNameInput();
+    },
     methods: {
+      focusNameInput() {
+        this.$refs.name.focus();
+      },
       clear() {
         let lastDate = localStorage.getItem("lastDate");
         console.log(lastDate);
@@ -192,17 +273,36 @@
         );
         console.log(response);
         this.bills = response.data;
+        this.chartDataLine = this.getLineData(this.bills);
+        this.chartDataPie = this.getPieData(this.bills);
+      },
+      getLineData(bills) {
         let result = {};
         this.bills.forEach((bill) => {
           result[bill.date] = (result[bill.date] || 0) + bill.cost;
         });
 
-        this.chartData = {
+        return {
           columns: ["日期", "账单"],
           rows: Object.keys(result)
             .sort()
             .map((x) => {
               return { 日期: x, 账单: result[x] };
+            }),
+        };
+      },
+      getPieData(bills) {
+        let result = {};
+        this.bills.forEach((bill) => {
+          result[bill.name] = (result[bill.name] || 0) + bill.cost;
+        });
+
+        return {
+          columns: ["事项", "花费"],
+          rows: Object.keys(result)
+            .sort()
+            .map((x) => {
+              return { 事项: x, 花费: result[x] };
             }),
         };
       },
@@ -225,7 +325,8 @@
         alert("新增成功");
         localStorage.setItem("lastDate", date);
         this.clear();
-        await this.search();
+        this.search();
+        this.focusNameInput();
       },
       toUpdate(bill) {
         this.bill = { ...bill };
@@ -252,13 +353,15 @@
         await this.$http.put(`/bills/${id}`, this.bill);
         alert("修改成功");
         this.clear();
-        await this.search();
+        this.search();
+        this.focusNameInput();
       },
       async removeBill(bill) {
         if (confirm(`确认删除${bill.date}${bill.name}的花费吗？`)) {
           await this.$http.delete(`/bills/${bill.id}`);
           alert("删除成功");
-          await this.search();
+          this.search();
+          this.focusNameInput();
         }
       },
       getToday() {
