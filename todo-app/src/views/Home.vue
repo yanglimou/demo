@@ -98,7 +98,7 @@ export default {
         content: "",
         time: "",
       },
-      setting: 1,
+      setting: 0,
     };
   },
   created() {
