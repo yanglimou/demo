@@ -3,37 +3,14 @@
     <div class="header">
       <div class="title">备忘录</div>
       <div class="cmd">
-        <el-button
-          icon="el-icon-plus"
-          size="mini"
-          :disabled="setting === 1"
-          @click="toAdd"
-        ></el-button>
-        <el-button
-          icon="el-icon-setting"
-          size="mini"
-          @click="setting = 1 - setting"
-        ></el-button>
+        <el-button icon="el-icon-plus" size="mini" @click="toAdd"></el-button>
       </div>
     </div>
     <div class="items">
-      <div class="item" v-for="(item, index) in items" :key="item.id">
-        <div class="time">{{ item.time }}</div>
+      <div class="item" v-for="item in items" :key="item.id">
+        <div class="time" v-if="item.time">{{ item.time }}</div>
+        <el-divider direction="vertical" v-if="item.time"></el-divider>
         <div class="title" @click="toUpdate(item)">{{ item.title }}</div>
-        <el-button
-          v-if="setting === 1"
-          :disabled="index === items.length - 1"
-          icon="el-icon-bottom"
-          size="mini"
-          @click="down(item.id)"
-        ></el-button>
-        <el-button
-          v-if="setting === 1"
-          :disabled="index === 0"
-          icon="el-icon-top"
-          size="mini"
-          @click="up(item.id)"
-        ></el-button>
       </div>
     </div>
 
@@ -61,8 +38,7 @@
             type="date"
             value-format="yyyy-MM-dd"
             placeholder="选择日期"
-          >
-          </el-date-picker>
+          ></el-date-picker>
         </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
@@ -98,13 +74,19 @@ export default {
         content: "",
         time: "",
       },
-      setting: 0,
     };
   },
   created() {
     this.listItems();
   },
   methods: {
+    formateDate(dateStr) {
+      //几天前|前天|昨天|今天|明天|后天|[2019-]9-3
+      return this.$moment(dateStr, "YYYY-MM-DD").from(
+        this.$moment(this.$moment().format("YYYY-MM-DD"), "YYYY-MM-DD")
+      );
+    },
+
     listItems() {
       this.items = this.getItemsService();
     },
@@ -117,9 +99,7 @@ export default {
       };
       this.dialogVisible = true;
     },
-    toSetting() {},
     toUpdate(item) {
-      if (this.setting === 1) return;
       this.item = { ...item };
       this.dialogVisible = true;
     },
@@ -168,6 +148,19 @@ export default {
       this.dialogVisible = false;
     },
 
+    sort(items) {
+      items.sort((x, y) => {
+        if (x.time && y.time) {
+          return x.time > y.time ? 1 : -1;
+        } else if (x.time) {
+          return 1;
+        } else if (y.time) {
+          return -1;
+        }
+        return 1;
+      });
+    },
+
     down(id) {
       this.downService(id);
       this.listItems();
@@ -185,6 +178,7 @@ export default {
       let items = this.getItemsService();
       let index = items.findIndex((i) => i.id === item.id);
       items.splice(index, 1, { ...item });
+      this.sort(items);
       window.localStorage.setItem("items", JSON.stringify(items));
     },
     getMaxId() {
@@ -194,27 +188,12 @@ export default {
     },
     saveService(item) {
       let items = this.getItemsService();
-      items.push(Object.assign({}, item, { id: this.getMaxId() }));
+      items.unshift(Object.assign({}, item, { id: this.getMaxId() }));
+      this.sort(items);
       window.localStorage.setItem("items", JSON.stringify(items));
     },
     deleteService(id) {
       let items = this.getItemsService().filter((x) => x.id !== id);
-      window.localStorage.setItem("items", JSON.stringify(items));
-    },
-    downService(id) {
-      let items = this.getItemsService();
-      let index = items.findIndex((i) => i.id === id);
-      let item = items.find((i) => i.id === id);
-      items.splice(index, 1);
-      items.splice(index + 1, 0, item);
-      window.localStorage.setItem("items", JSON.stringify(items));
-    },
-    upService(id) {
-      let items = this.getItemsService();
-      let index = items.findIndex((i) => i.id === id);
-      let item = items.find((i) => i.id === id);
-      items.splice(index, 1);
-      items.splice(index - 1, 0, item);
       window.localStorage.setItem("items", JSON.stringify(items));
     },
   },
