@@ -7,25 +7,15 @@
       </div>
     </div>
     <div class="items">
-      <div class="item" v-for="item in items" :key="item.id">
-        <div class="time" v-if="item.time">{{ item.time }}</div>
+      <div :class="['item',{'recent':isRecent(item.time)}]" v-for="item in items" :key="item.id">
+        <div class="time" v-if="item.time">{{ formateDate(item.time) }}</div>
         <el-divider direction="vertical" v-if="item.time"></el-divider>
         <div class="title" @click="toUpdate(item)">{{ item.title }}</div>
       </div>
     </div>
 
-    <el-dialog
-      :title="item.id ? '修改任务' : '新增任务'"
-      :visible.sync="dialogVisible"
-      width="80%"
-    >
-      <el-form
-        ref="form"
-        :model="item"
-        :rules="rules"
-        label-width="3.5rem"
-        size="mini"
-      >
+    <el-dialog :title="item.id ? '修改任务' : '新增任务'" :visible.sync="dialogVisible" width="80%">
+      <el-form ref="form" :model="item" :rules="rules" label-width="3.5rem" size="mini">
         <el-form-item label="标题" prop="title">
           <el-input v-model="item.title"></el-input>
         </el-form-item>
@@ -42,15 +32,12 @@
         </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
-        <el-button @click="remove" v-if="item.id" type="danger" size="mini"
-          >删 除</el-button
-        >
+        <el-button @click="remove" v-if="item.id" type="danger" size="mini">删 除</el-button>
         <el-button
           type="primary"
           size="mini"
           @click="item.id ? update() : save()"
-          >{{ item.id ? "修 改" : "新 增" }}</el-button
-        >
+        >{{ item.id ? "修 改" : "新 增" }}</el-button>
       </span>
     </el-dialog>
   </div>
@@ -65,37 +52,101 @@ export default {
     return {
       items: [],
       rules: {
-        title: [{ required: true, message: "请输入标题", trigger: "blur" }],
+        title: [{ required: true, message: "请输入标题", trigger: "blur" }]
       },
       dialogVisible: false,
       item: {
         id: "",
         title: "",
         content: "",
-        time: "",
-      },
+        time: ""
+      }
     };
   },
   created() {
     this.listItems();
   },
   methods: {
+    isRecent(dateStr) {
+      let diff = this.$moment(dateStr, "YYYY-MM-DD").diff(
+        this.$moment(),
+        "days"
+      );
+      return diff < 2 && diff >= 0;
+    },
     formateDate(dateStr) {
       //几天前|前天|昨天|今天|明天|后天|[2019-]9-3
-      return this.$moment(dateStr, "YYYY-MM-DD").from(
-        this.$moment(this.$moment().format("YYYY-MM-DD"), "YYYY-MM-DD")
-      );
+      let now = this.$moment();
+      if (
+        this.$moment(dateStr, "YYYY-MM-DD")
+          .add(2, "days")
+          .isSame(now, "day")
+      ) {
+        return "前天";
+      }
+      if (
+        this.$moment(dateStr, "YYYY-MM-DD")
+          .add(1, "days")
+          .isSame(now, "day")
+      ) {
+        return "昨天";
+      }
+
+      if (this.$moment(dateStr, "YYYY-MM-DD").isSame(now, "day")) {
+        return "今天";
+      }
+      if (
+        this.$moment(dateStr, "YYYY-MM-DD")
+          .add(-1, "days")
+          .isSame(now, "day")
+      ) {
+        return "明天";
+      }
+      if (
+        this.$moment(dateStr, "YYYY-MM-DD")
+          .add(-2, "days")
+          .isSame(now, "day")
+      ) {
+        return "后天";
+      }
+
+      if (this.$moment(dateStr, "YYYY-MM-DD").isBefore(now)) {
+        return this.$moment(dateStr, "YYYY-MM-DD").fromNow();
+      }
+      //这周
+      if (this.$moment(dateStr, "YYYY-MM-DD").isSame(now, "week")) {
+        return this.$moment(dateStr, "YYYY-MM-DD").format("ddd");
+      }
+      //下周
+      if (
+        this.$moment(dateStr, "YYYY-MM-DD")
+          .add(-7, "day")
+          .isSame(now, "week")
+      ) {
+        return "下" + this.$moment(dateStr, "YYYY-MM-DD").format("ddd");
+      }
+      //本月
+      if (this.$moment(dateStr, "YYYY-MM-DD").isSame(now, "month")) {
+        return this.$moment(dateStr, "YYYY-MM-DD").format("D日");
+      }
+      //本年
+      if (this.$moment(dateStr, "YYYY-MM-DD").isSame(now, "year")) {
+        return this.$moment(dateStr, "YYYY-MM-DD").format("M月D日");
+      }
+      return this.$moment(dateStr, "YYYY-MM-DD").format("YYYY年M月D日");
     },
 
     listItems() {
-      this.items = this.getItemsService();
+      let items = this.getItemsService();
+      items.sort((x, y) => x.time - y.time);
+      this.items = items;
     },
     toAdd() {
       this.item = {
         id: "",
         title: "",
         content: "",
-        time: "",
+        time: ""
       };
       this.dialogVisible = true;
     },
@@ -107,13 +158,13 @@ export default {
       this.$message({
         type: "success",
         message,
-        duration: 500,
+        duration: 500
       });
     },
 
     async update() {
       await new Promise((resolve, reject) => {
-        this.$refs["form"].validate((valid) => {
+        this.$refs["form"].validate(valid => {
           if (valid) {
             resolve();
           } else {
@@ -128,7 +179,7 @@ export default {
     },
     async save() {
       await new Promise((resolve, reject) => {
-        this.$refs["form"].validate((valid) => {
+        this.$refs["form"].validate(valid => {
           if (valid) {
             resolve();
           } else {
@@ -176,14 +227,14 @@ export default {
     },
     updateService(item) {
       let items = this.getItemsService();
-      let index = items.findIndex((i) => i.id === item.id);
+      let index = items.findIndex(i => i.id === item.id);
       items.splice(index, 1, { ...item });
       this.sort(items);
       window.localStorage.setItem("items", JSON.stringify(items));
     },
     getMaxId() {
       let items = this.getItemsService();
-      const maxId = items.map((x) => x.id).reduce((x, y) => Math.max(x, y), 0);
+      const maxId = items.map(x => x.id).reduce((x, y) => Math.max(x, y), 0);
       return maxId + 1;
     },
     saveService(item) {
@@ -193,10 +244,10 @@ export default {
       window.localStorage.setItem("items", JSON.stringify(items));
     },
     deleteService(id) {
-      let items = this.getItemsService().filter((x) => x.id !== id);
+      let items = this.getItemsService().filter(x => x.id !== id);
       window.localStorage.setItem("items", JSON.stringify(items));
-    },
-  },
+    }
+  }
 };
 </script>
 <style lang="scss" scoped>
@@ -221,12 +272,15 @@ export default {
   .items {
     flex: 1 0 0;
     height: 0;
-    padding: 0 0.5rem;
     .item {
       display: flex;
       align-items: center;
-      padding: 0.5rem 0;
+      padding: 0.5rem 0.5rem;
       border-bottom: 1px solid #eee;
+      &.recent {
+        background-color: #e6a23c;
+        color: #fff;
+      }
       .title {
         flex: 1 0 0;
         width: 0;
