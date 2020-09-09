@@ -7,7 +7,11 @@
       </div>
     </div>
     <div class="items">
-      <div :class="['item',{'recent':isRecent(item.time)}]" v-for="item in items" :key="item.id">
+      <div
+        :class="['item',{'today':isToday(item.time),'tomorrow':isTomorrow(item.time),'nextTomorrow':isNextTomorrow(item.time),'outOfDate':isOutOfDate(item.time)}]"
+        v-for="item in items"
+        :key="item.id"
+      >
         <div class="time" v-if="item.time">{{ formateDate(item.time) }}</div>
         <el-divider direction="vertical" v-if="item.time"></el-divider>
         <div class="title" @click="toUpdate(item)">{{ item.title }}</div>
@@ -134,6 +138,26 @@ export default {
         return this.$moment(dateStr, "YYYY-MM-DD").format("M月D日");
       }
       return this.$moment(dateStr, "YYYY-MM-DD").format("YYYY年M月D日");
+    },
+
+    isToday(dateStr) {
+      return this.$moment(dateStr, "YYYY-MM-DD").isSame(this.$moment(), "day");
+    },
+    isTomorrow(dateStr) {
+      return this.$moment(dateStr, "YYYY-MM-DD")
+        .add(-1, "days")
+        .isSame(this.$moment(), "day");
+    },
+    isNextTomorrow(dateStr) {
+      return this.$moment(dateStr, "YYYY-MM-DD")
+        .add(-2, "days")
+        .isSame(this.$moment(), "day");
+    },
+    isOutOfDate(dateStr) {
+      return this.$moment(dateStr, "YYYY-MM-DD").isBefore(
+        this.$moment(),
+        "day"
+      );
     },
 
     listItems() {
@@ -277,8 +301,20 @@ export default {
       align-items: center;
       padding: 0.5rem 0.5rem;
       border-bottom: 1px solid #eee;
-      &.recent {
+      &.today {
         background-color: #e6a23c;
+        color: #fff;
+      }
+      &.tomorrow {
+        background-color: #ebbe7c;
+        color: #fff;
+      }
+      &.nextTomorrow {
+        background-color: #ebd0a8;
+        color: #fff;
+      }
+      &.outOfDate {
+        background: rgb(245, 108, 108);
         color: #fff;
       }
       .title {
