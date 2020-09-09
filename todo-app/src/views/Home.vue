@@ -310,7 +310,7 @@ export default {
         color: #fff;
       }
       &.nextTomorrow {
-        background-color: #ebd0a8;
+        background-color: #ecdabf;
         color: #fff;
       }
       &.outOfDate {
