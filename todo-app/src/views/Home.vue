@@ -89,7 +89,7 @@ export default {
       rules: {
         title: [{ required: true, message: "请输入标题", trigger: "blur" }]
       },
-      dialogVisible: true,
+      dialogVisible: false,
       item: {
         id: "",
         title: "",
