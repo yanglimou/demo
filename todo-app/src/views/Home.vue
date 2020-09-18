@@ -14,6 +14,7 @@
       >
         <div class="time" v-if="item.time">{{ formateDate(item.time) }}</div>
         <el-divider direction="vertical" v-if="item.time"></el-divider>
+        <img v-if="item.moneyFlag===1" class="money_png" :src="money_png" alt />
         <div class="title" @click="toUpdate(item)">{{ item.title }}</div>
       </div>
     </div>
@@ -34,6 +35,15 @@
             placeholder="选择日期"
           ></el-date-picker>
         </el-form-item>
+        <el-form-item label="钱">
+          <el-switch
+            v-model="item.moneyFlag"
+            :active-value="1"
+            :inactive-value="0"
+            active-color="#13ce66"
+            inactive-color="#ccc"
+          ></el-switch>
+        </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
         <el-button @click="remove" v-if="item.id" type="danger" size="mini">删 除</el-button>
@@ -49,11 +59,12 @@
 
 <script>
 // @ is an alias to /src
-
+import money_png from "../assets/money.png";
 export default {
   name: "Home",
   data() {
     return {
+      money_png,
       items: [],
       rules: {
         title: [{ required: true, message: "请输入标题", trigger: "blur" }]
@@ -63,7 +74,8 @@ export default {
         id: "",
         title: "",
         content: "",
-        time: ""
+        time: "",
+        moneyFlag: 1
       }
     };
   },
@@ -170,7 +182,8 @@ export default {
         id: "",
         title: "",
         content: "",
-        time: ""
+        time: "",
+        moneyFlag: 1
       };
       this.dialogVisible = true;
     },
@@ -320,6 +333,10 @@ export default {
       .title {
         flex: 1 0 0;
         width: 0;
+      }
+      .money_png {
+        height: 1rem;
+        margin-right: 0.5rem;
       }
     }
   }
