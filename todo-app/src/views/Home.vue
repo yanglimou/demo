@@ -14,7 +14,12 @@
       >
         <div class="time" v-if="item.time">{{ formateDate(item.time) }}</div>
         <el-divider direction="vertical" v-if="item.time"></el-divider>
-        <img v-if="item.moneyFlag===1" class="money_png" :src="money_png" alt />
+        <img
+          v-if="item.moneyFlag===1||item.moneyFlag===2"
+          class="money_png"
+          :src="item.moneyFlag===1?money_png:money_out_png"
+          alt
+        />
         <div class="title" @click="toUpdate(item)">{{ item.title }}</div>
       </div>
     </div>
@@ -36,13 +41,26 @@
           ></el-date-picker>
         </el-form-item>
         <el-form-item label="钱">
-          <el-switch
+          <el-radio v-model="item.moneyFlag" :label="0">无关</el-radio>
+          <el-radio v-model="item.moneyFlag" :label="1">收入</el-radio>
+          <el-radio v-model="item.moneyFlag" :label="2">支出</el-radio>
+          <!-- <el-switch
             v-model="item.moneyFlag"
             :active-value="1"
             :inactive-value="0"
             active-color="#13ce66"
             inactive-color="#ccc"
           ></el-switch>
+          <br />
+          <el-switch
+            v-model="item.moneyTypeFlag"
+            :active-value="1"
+            :inactive-value="0"
+            active-color="#13ce66"
+            inactive-color="#ff4949"
+            active-text="收入"
+            inactive-text="支出"
+          ></el-switch>-->
         </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
@@ -60,22 +78,24 @@
 <script>
 // @ is an alias to /src
 import money_png from "../assets/money.png";
+import money_out_png from "../assets/money_out.png";
 export default {
   name: "Home",
   data() {
     return {
       money_png,
+      money_out_png,
       items: [],
       rules: {
         title: [{ required: true, message: "请输入标题", trigger: "blur" }]
       },
-      dialogVisible: false,
+      dialogVisible: true,
       item: {
         id: "",
         title: "",
         content: "",
-        time: "",
-        moneyFlag: 1
+        time: this.$moment().format("YYYY-MM-DD"),
+        moneyFlag: 0
       }
     };
   },
@@ -182,8 +202,8 @@ export default {
         id: "",
         title: "",
         content: "",
-        time: "",
-        moneyFlag: 1
+        time: this.$moment().format("YYYY-MM-DD"),
+        moneyFlag: 0
       };
       this.dialogVisible = true;
     },
@@ -287,6 +307,19 @@ export default {
   }
 };
 </script>
+<style lang="scss">
+.el-dialog__header {
+  // padding: 10px 20px 10px;
+  border-bottom: 1px solid #eee;
+}
+.el-dialog__footer {
+  // padding: 10px 20px 10px;
+  border-top: 1px solid #eee;
+}
+.el-dialog__body {
+  padding: 10px 20px 0px;
+}
+</style>
 <style lang="scss" scoped>
 .el-date-editor.el-input,
 .el-date-editor.el-input__inner {
